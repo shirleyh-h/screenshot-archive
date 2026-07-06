@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screenshot Archive</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f11;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,17,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #222;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 600; flex: 1; }
+  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
+  #status-dot.ok { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+  #status-dot.err { background: #f87171; }
+  #status-label { font-size: .78rem; color: #888; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 8px; border: 1px solid #333;
+    background: #1a1a1e; color: #ccc; font-size: .82rem; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .btn:hover { background: #2a2a30; color: #fff; }
+  .btn.primary { background: #4f46e5; border-color: #6366f1; color: #fff; }
+  .btn.primary:hover { background: #4338ca; }
+
+  .toolbar {
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  #search { flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px; border: 1px solid #2a2a2e; background: #1a1a1e; color: #e0e0e0; font-size: .88rem; }
+  #search:focus { outline: none; border-color: #4f46e5; }
+  #count { font-size: .8rem; color: #666; margin-left: auto; }
+
+  /* Drop zone */
+  #drop-zone {
+    margin: 0 24px 8px;
+    border: 2px dashed #2a2a30;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    color: #555;
+    font-size: .88rem;
+    transition: border-color .2s, background .2s;
+    cursor: pointer;
+  }
+  #drop-zone.drag-over { border-color: #6366f1; background: rgba(99,102,241,.06); color: #a5b4fc; }
+  #file-input { display: none; }
+
+  /* Grid */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 0 24px 40px;
+  }
+
+  .card {
+    background: #1a1a1e;
+    border: 1px solid #222;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    animation: fadeIn .25s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #111; }
+  .card-body { padding: 10px 12px; }
+  .card-name { font-size: .75rem; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: .7rem; color: #555; margin-top: 2px; }
+
+  .card-actions {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .action-btn {
+    flex: 1; padding: 5px 8px; border-radius: 6px; border: 1px solid #2a2a2e;
+    background: #111; color: #aaa; font-size: .72rem; cursor: pointer;
+    transition: background .1s, color .1s;
+  }
+  .action-btn:hover { background: #222; color: #fff; }
+  .action-btn.danger:hover { background: #3f1212; color: #f87171; border-color: #5a1a1a; }
+  .action-btn.copied { background: #14532d; color: #4ade80; border-color: #166534; }
+
+  .badge {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(0,0,0,.7); color: #888; font-size: .65rem;
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* Modal */
+  #modal {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.85); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #modal.open { display: flex; }
+  #modal img { max-width: 90vw; max-height: 85vh; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.8); }
+  #modal-close { position: fixed; top: 20px; right: 24px; font-size: 1.8rem; color: #888; cursor: pointer; line-height: 1; }
+  #modal-close:hover { color: #fff; }
+  #modal-url {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1e; border: 1px solid #2a2a2e; border-radius: 10px;
+    padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+    max-width: 90vw;
+  }
+  #modal-url-text { font-size: .78rem; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
+  #modal-copy-btn { flex-shrink: 0; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1f2937; border: 1px solid #374151; border-radius: 8px;
+    padding: 10px 18px; font-size: .84rem; color: #e0e0e0;
+    opacity: 0; transition: opacity .2s, transform .2s;
+    pointer-events: none; z-index: 300;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #empty { text-align: center; color: #444; padding: 80px 0; font-size: .95rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div id="status-dot"></div>
+  <h1>Screenshot Archive</h1>
+  <span id="status-label">GitHub 미연결</span>
+  <button class="btn" onclick="pushAll()">GitHub 동기화</button>
+</header>
+
+<div class="toolbar">
+  <input id="search" type="text" placeholder="파일명 검색..." oninput="filterImages()">
+  <label class="btn" for="file-input">이미지 업로드</label>
+  <input id="file-input" type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
+  <span id="count"></span>
+</div>
+
+<div id="drop-zone" onclick="document.getElementById('file-input').click()">
+  여기에 이미지를 드래그하거나 클릭해서 업로드
+</div>
+
+<div id="grid"></div>
+<div id="empty" style="display:none">저장된 스크린샷이 없어요.</div>
+
+<div id="modal">
+  <span id="modal-close" onclick="closeModal()">✕</span>
+  <img id="modal-img" src="" alt="">
+  <div id="modal-url">
+    <span id="modal-url-text"></span>
+    <button class="btn primary" id="modal-copy-btn" onclick="copyModalUrl()">URL 복사</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let allImages = [];
+let currentModal = null;
+
+async function loadImages() {
+  const res = await fetch('/api/images');
+  allImages = await res.json();
+  renderGrid(allImages);
+  document.getElementById('count').textContent = `${allImages.length}장`;
+}
+
+function filterImages() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = q ? allImages.filter(i => i.name.toLowerCase().includes(q)) : allImages;
+  renderGrid(filtered);
+}
+
+function renderGrid(images) {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  if (!images.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = images.map(img => `
+    <div class="card" data-name="${img.name}">
+      <img src="${img.localUrl}" alt="${img.name}" loading="lazy" onclick="openModal('${img.name}', '${img.rawUrl}', '${img.localUrl}')">
+      <span class="badge">${formatSize(img.size)}</span>
+      <div class="card-body">
+        <div class="card-name">${img.name}</div>
+        <div class="card-meta">${new Date(img.mtime).toLocaleString('ko-KR')}</div>
+        <div class="card-actions">
+          <button class="action-btn" onclick="copyUrl(this, '${img.rawUrl}')">URL 복사</button>
+          <button class="action-btn" onclick="copyUrl(this, '${img.localUrl}', true)">로컬 복사</button>
+          <button class="action-btn danger" onclick="deleteImage(event, '${img.name}')">삭제</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function copyUrl(btn, url, local = false) {
+  await navigator.clipboard.writeText(local ? location.origin + url : url);
+  btn.classList.add('copied');
+  btn.textContent = '복사됨!';
+  setTimeout(() => { btn.classList.remove('copied'); btn.textContent = local ? '로컬 복사' : 'URL 복사'; }, 1500);
+  toast(local ? '로컬 URL 복사됨' : 'GitHub URL 복사됨');
+}
+
+async function deleteImage(e, name) {
+  e.stopPropagation();
+  if (!confirm(`"${name}" 를 삭제할까요?`)) return;
+  await fetch(`/api/images/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  allImages = allImages.filter(i => i.name !== name);
+  filterImages();
+  document.getElementById('count').textContent = `${allImages.length}장`;
+  toast('삭제됨');
+}
+
+function openModal(name, rawUrl, localUrl) {
+  currentModal = { name, rawUrl, localUrl };
+  document.getElementById('modal-img').src = localUrl;
+  document.getElementById('modal-url-text').textContent = rawUrl;
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modal-copy-btn').textContent = 'URL 복사';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  currentModal = null;
+}
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function copyModalUrl() {
+  if (!currentModal) return;
+  await navigator.clipboard.writeText(currentModal.rawUrl);
+  const btn = document.getElementById('modal-copy-btn');
+  btn.textContent = '복사됨!';
+  setTimeout(() => btn.textContent = 'URL 복사', 1500);
+  toast('GitHub URL 복사됨');
+}
+
+async function uploadFiles(files) {
+  const fd = new FormData();
+  for (const f of files) fd.append('images', f);
+  toast('업로드 중...');
+  const res = await fetch('/api/upload', { method: 'POST', body: fd });
+  const data = await res.json();
+  toast(`${data.added.length}장 업로드 완료`);
+  loadImages();
+}
+
+async function pushAll() {
+  toast('GitHub에 동기화 중...');
+  const res = await fetch('/api/push-all', { method: 'POST' });
+  const data = await res.json();
+  toast(data.ok ? 'GitHub 동기화 완료' : `동기화 실패: ${data.message}`);
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB';
+  return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+}
+
+// Drag & drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  uploadFiles(e.dataTransfer.files);
+});
+
+// SSE for live updates
+const es = new EventSource('/api/events');
+es.addEventListener('added', () => loadImages());
+es.addEventListener('removed', () => loadImages());
+
+// GitHub status
+async function checkGitStatus() {
+  const res = await fetch('/api/git-status');
+  const data = await res.json();
+  const dot = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  if (data.connected) {
+    dot.className = 'ok';
+    label.textContent = `GitHub 연결됨`;
+  } else {
+    dot.className = 'err';
+    label.textContent = 'GitHub 미연결';
+  }
+}
+
+loadImages();
+checkGitStatus();
+</script>
+</body>
+</html>
