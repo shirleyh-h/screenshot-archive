@@ -6,10 +6,10 @@ const fs = require('fs');
 const { execSync, exec } = require('child_process');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3100;
 const ARCHIVE_DIR = path.join(__dirname, 'archive');
 const DESKTOP = path.join(process.env.HOME, 'Desktop');
-const GITHUB_USER = 'shirleysol2';
+const GITHUB_USER = 'shirleyh-h';
 const GITHUB_REPO = 'screenshot-archive';
 const BRANCH = 'main';
 const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/archive`;
