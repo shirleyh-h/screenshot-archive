@@ -4,168 +4,584 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Screenshot Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f0f11;
-    color: #e0e0e0;
-    min-height: 100vh;
-  }
+:root {
+  --bg: linear-gradient(135deg, #6eb3f7 0%, #4a7fdf 50%, #3060c8 100%);
+  --sidebar-bg: #1e2a5e;
+  --sidebar-hover: rgba(255,255,255,.07);
+  --sidebar-active: rgba(255,255,255,.13);
+  --sidebar-border: rgba(255,255,255,.08);
+  --card: rgba(255,255,255,.88);
+  --card-shadow: 0 8px 32px rgba(20,50,120,.18);
+  --card-radius: 14px;
+  --card-hover-shadow: 0 16px 48px rgba(20,50,120,.28);
+  --glass: rgba(255,255,255,.18);
+  --glass-border: rgba(255,255,255,.3);
+  --text-dark: #1a2547;
+  --text-mid: #8a9bc4;
+  --text-white: #fff;
+  --text-white-60: rgba(255,255,255,.6);
+  --text-white-40: rgba(255,255,255,.4);
+  --accent: #7b6ef6;
+  --accent2: #4ec9ec;
+  --green: #3ecf8e;
+  --danger: #ff6b6b;
+  --divider: rgba(255,255,255,.15);
+  --sidebar-w: 230px;
+}
 
-  header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(15,15,17,.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid #222;
-    padding: 14px 24px;
-    display: flex; align-items: center; gap: 16px;
-  }
-  header h1 { font-size: 1.1rem; font-weight: 600; flex: 1; }
-  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
-  #status-dot.ok { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-  #status-dot.err { background: #f87171; }
-  #status-label { font-size: .78rem; color: #888; }
+body {
+  font-family: 'Poppins', -apple-system, sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  font-size: 13px;
+}
 
-  .btn {
-    padding: 7px 14px; border-radius: 8px; border: 1px solid #333;
-    background: #1a1a1e; color: #ccc; font-size: .82rem; cursor: pointer;
-    transition: background .15s, color .15s;
-  }
-  .btn:hover { background: #2a2a30; color: #fff; }
-  .btn.primary { background: #4f46e5; border-color: #6366f1; color: #fff; }
-  .btn.primary:hover { background: #4338ca; }
+/* ──────────────── SIDEBAR ──────────────── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  .toolbar {
-    padding: 14px 24px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  }
-  #search { flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px; border: 1px solid #2a2a2e; background: #1a1a1e; color: #e0e0e0; font-size: .88rem; }
-  #search:focus { outline: none; border-color: #4f46e5; }
-  #count { font-size: .8rem; color: #666; margin-left: auto; }
+#sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--sidebar-border);
+}
 
-  /* Drop zone */
-  #drop-zone {
-    margin: 0 24px 8px;
-    border: 2px dashed #2a2a30;
-    border-radius: 12px;
-    padding: 24px;
-    text-align: center;
-    color: #555;
-    font-size: .88rem;
-    transition: border-color .2s, background .2s;
-    cursor: pointer;
-  }
-  #drop-zone.drag-over { border-color: #6366f1; background: rgba(99,102,241,.06); color: #a5b4fc; }
-  #file-input { display: none; }
+.brand {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+}
+.brand-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(123,110,246,.4);
+}
+.brand-name {
+  font-size: 13px; font-weight: 700; color: var(--text-white);
+  letter-spacing: .02em; line-height: 1.2;
+}
+.brand-sub { font-size: 10px; color: var(--text-white-40); font-weight: 400; }
 
-  /* Grid */
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    padding: 0 24px 40px;
-  }
+#git-status {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,.06);
+  border-radius: 8px;
+  font-size: 11px; color: var(--text-white-60);
+}
+#git-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-white-40); flex-shrink: 0;
+  transition: background .3s;
+}
+#git-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+#git-dot.err { background: var(--danger); }
 
-  .card {
-    background: #1a1a1e;
-    border: 1px solid #222;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
-    animation: fadeIn .25s ease;
-  }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.section-label {
+  padding: 14px 20px 6px;
+  font-size: 9px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-white-40);
+}
 
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+#folder-list { overflow-y: auto; flex-shrink: 0; max-height: 40vh; }
+#folder-list::-webkit-scrollbar { width: 0; }
 
-  .card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #111; }
-  .card-body { padding: 10px 12px; }
-  .card-name { font-size: .75rem; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-meta { font-size: .7rem; color: #555; margin-top: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 20px;
+  cursor: pointer;
+  color: var(--text-white-60);
+  font-size: 12px; font-weight: 500;
+  transition: background .15s, color .15s;
+  user-select: none; position: relative;
+}
+.nav-item:hover { background: var(--sidebar-hover); color: var(--text-white); }
+.nav-item.active {
+  background: var(--sidebar-active);
+  color: var(--text-white);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; background: linear-gradient(to bottom, var(--accent), var(--accent2));
+  border-radius: 0 3px 3px 0;
+}
+.nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; opacity: .8; }
+.nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-count {
+  font-size: 10px; font-weight: 600;
+  background: rgba(255,255,255,.1); color: var(--text-white-60);
+  padding: 1px 7px; border-radius: 10px;
+  min-width: 22px; text-align: center;
+}
+.nav-item.active .nav-count {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+}
+.nav-item .del-btn {
+  display: none; background: none; border: none; cursor: pointer;
+  color: var(--text-white-40); font-size: 15px; padding: 0 2px; line-height: 1;
+}
+.nav-item:hover .del-btn { display: block; }
+.nav-item .del-btn:hover { color: var(--danger); }
 
-  .card-actions {
-    display: flex; gap: 6px; margin-top: 8px;
-  }
-  .action-btn {
-    flex: 1; padding: 5px 8px; border-radius: 6px; border: 1px solid #2a2a2e;
-    background: #111; color: #aaa; font-size: .72rem; cursor: pointer;
-    transition: background .1s, color .1s;
-  }
-  .action-btn:hover { background: #222; color: #fff; }
-  .action-btn.danger:hover { background: #3f1212; color: #f87171; border-color: #5a1a1a; }
-  .action-btn.copied { background: #14532d; color: #4ade80; border-color: #166534; }
+#add-folder-btn {
+  margin: 6px 14px 0;
+  width: calc(100% - 28px);
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: var(--text-white-40);
+  font-size: 11px; font-family: inherit; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+#add-folder-btn:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  .badge {
-    position: absolute; top: 8px; right: 8px;
-    background: rgba(0,0,0,.7); color: #888; font-size: .65rem;
-    padding: 2px 6px; border-radius: 4px;
-  }
+#tag-section { flex: 1; overflow-y: auto; min-height: 0; }
+#tag-section::-webkit-scrollbar { width: 0; }
+#tag-list { padding-bottom: 8px; }
 
-  /* Modal */
-  #modal {
-    display: none; position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,.85); backdrop-filter: blur(6px);
-    align-items: center; justify-content: center;
-  }
-  #modal.open { display: flex; }
-  #modal img { max-width: 90vw; max-height: 85vh; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.8); }
-  #modal-close { position: fixed; top: 20px; right: 24px; font-size: 1.8rem; color: #888; cursor: pointer; line-height: 1; }
-  #modal-close:hover { color: #fff; }
-  #modal-url {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: #1a1a1e; border: 1px solid #2a2a2e; border-radius: 10px;
-    padding: 10px 16px; display: flex; align-items: center; gap: 10px;
-    max-width: 90vw;
-  }
-  #modal-url-text { font-size: .78rem; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
-  #modal-copy-btn { flex-shrink: 0; }
+.tag-nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 20px; cursor: pointer;
+  color: var(--text-white-60); font-size: 12px; font-weight: 500;
+  transition: background .15s, color .15s;
+  user-select: none; position: relative;
+}
+.tag-nav-item:hover { background: var(--sidebar-hover); color: var(--text-white); }
+.tag-nav-item.active { background: var(--sidebar-active); color: var(--text-white); }
+.tag-nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; background: linear-gradient(to bottom, var(--accent), var(--accent2));
+  border-radius: 0 3px 3px 0;
+}
+.tag-pill {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  flex-shrink: 0;
+}
 
-  /* Toast */
-  #toast {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: #1f2937; border: 1px solid #374151; border-radius: 8px;
-    padding: 10px 18px; font-size: .84rem; color: #e0e0e0;
-    opacity: 0; transition: opacity .2s, transform .2s;
-    pointer-events: none; z-index: 300;
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#sidebar-bottom {
+  border-top: 1px solid var(--sidebar-border);
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.sidebar-btn {
+  width: 100%; padding: 8px 12px; border-radius: 9px;
+  border: none; font-size: 11px; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; gap: 7px;
+  font-weight: 500; transition: background .15s, color .15s;
+}
+.sidebar-btn.ghost {
+  background: rgba(255,255,255,.07); color: var(--text-white-60);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.sidebar-btn.ghost:hover { background: rgba(255,255,255,.12); color: var(--text-white); }
+.sidebar-btn.primary {
+  background: linear-gradient(135deg, var(--accent), #5b9ef6);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(123,110,246,.35);
+}
+.sidebar-btn.primary:hover { box-shadow: 0 6px 20px rgba(123,110,246,.5); }
 
-  #empty { text-align: center; color: #444; padding: 80px 0; font-size: .95rem; }
+/* ──────────────── MAIN ──────────────── */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Header */
+#topbar {
+  padding: 20px 28px 0;
+  display: flex; align-items: center; gap: 16px;
+  flex-shrink: 0;
+}
+#current-title {
+  font-size: 20px; font-weight: 700; color: var(--text-white);
+  letter-spacing: -.01em; flex: 1;
+}
+#current-title span { font-size: 12px; font-weight: 400; color: var(--text-white-60); margin-left: 8px; }
+
+.glass-btn {
+  padding: 8px 16px; border-radius: 22px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--text-white); font-size: 11px; font-family: inherit;
+  cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 6px;
+  transition: background .15s;
+  backdrop-filter: blur(8px);
+}
+.glass-btn:hover { background: rgba(255,255,255,.28); }
+
+/* Toolbar */
+#toolbar {
+  padding: 14px 28px 16px;
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+#search-wrap {
+  flex: 1; max-width: 300px; position: relative;
+}
+#search-wrap svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: rgba(255,255,255,.5); pointer-events: none;
+}
+#search {
+  width: 100%; padding: 9px 12px 9px 36px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 22px; color: var(--text-white);
+  font-size: 12px; font-family: inherit;
+  backdrop-filter: blur(8px);
+}
+#search:focus { outline: none; border-color: rgba(255,255,255,.55); }
+#search::placeholder { color: rgba(255,255,255,.45); }
+
+#count-chip {
+  padding: 6px 14px; border-radius: 20px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  font-size: 11px; font-weight: 600; color: var(--text-white);
+  backdrop-filter: blur(8px);
+}
+
+#zoom-wrap { display: flex; align-items: center; gap: 8px; }
+#zoom-wrap svg { color: rgba(255,255,255,.5); }
+#zoom-slider {
+  -webkit-appearance: none;
+  width: 80px; height: 3px;
+  background: rgba(255,255,255,.25); border-radius: 2px; outline: none; cursor: pointer;
+}
+#zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 13px; height: 13px;
+  border-radius: 50%; background: #fff; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+/* Grid area */
+#grid-area {
+  flex: 1; overflow-y: auto;
+  padding: 0 28px 32px;
+}
+#grid-area::-webkit-scrollbar { width: 0; }
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--cell-size, 200px), 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden; cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  animation: cardIn .25s ease both;
+  position: relative;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-hover-shadow);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-thumb {
+  width: 100%; aspect-ratio: 16/9;
+  object-fit: cover; display: block;
+  background: #e8eef8;
+}
+
+.card-body {
+  padding: 10px 12px 12px;
+}
+.card-name {
+  font-size: 11px; font-weight: 600; color: var(--text-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.card-meta {
+  font-size: 10px; color: var(--text-mid);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(123,110,246,.12), rgba(78,201,236,.12));
+  border: 1px solid rgba(123,110,246,.2);
+  font-size: 9px; font-weight: 600; color: var(--accent);
+  cursor: pointer; transition: background .1s;
+  white-space: nowrap;
+}
+.tag-chip:hover { background: linear-gradient(135deg, rgba(123,110,246,.22), rgba(78,201,236,.22)); }
+.tag-chip .rm { opacity: .5; margin-left: 2px; font-size: 11px; }
+.tag-chip .rm:hover { opacity: 1; }
+
+/* Card actions overlay */
+.card-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; gap: 5px; opacity: 0;
+  transition: opacity .18s;
+}
+.card:hover .card-actions { opacity: 1; }
+.icon-btn {
+  width: 28px; height: 28px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,.9); backdrop-filter: blur(4px);
+  color: var(--text-dark); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  transition: background .1s, color .1s, transform .1s;
+}
+.icon-btn:hover { background: #fff; transform: scale(1.08); }
+.icon-btn.danger:hover { background: var(--danger); color: #fff; }
+.icon-btn.copied { background: var(--green); color: #fff; }
+
+/* Empty */
+#empty {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 10px;
+  color: rgba(255,255,255,.5); font-size: 13px;
+}
+
+/* Drop overlay */
+#drop-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(48,96,200,.35);
+  border: 3px dashed rgba(255,255,255,.6);
+  align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 600; color: #fff;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+#drop-overlay.active { display: flex; }
+
+/* ──────────────── MODAL ──────────────── */
+#modal {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(20,42,100,.65); backdrop-filter: blur(12px);
+  align-items: center; justify-content: center;
+}
+#modal.open { display: flex; }
+
+#modal-content {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  max-width: 90vw;
+}
+
+#modal-img {
+  max-width: 78vw; max-height: 68vh;
+  border-radius: 12px; object-fit: contain;
+  box-shadow: 0 24px 80px rgba(10,30,100,.6);
+}
+
+#modal-panel {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  min-width: 400px; max-width: 78vw;
+  box-shadow: var(--card-shadow);
+}
+.modal-row { display: flex; align-items: center; gap: 10px; }
+
+#modal-name-input {
+  flex: 1; background: transparent; border: none;
+  border-bottom: 1.5px solid transparent;
+  color: var(--text-dark); font-size: 13px; font-weight: 600;
+  font-family: inherit; outline: none;
+  transition: border-color .15s; padding-bottom: 2px;
+}
+#modal-name-input:focus { border-bottom-color: var(--accent); }
+#modal-name-input::placeholder { color: var(--text-mid); font-weight: 400; }
+
+#modal-folder-select {
+  background: #f0f4ff; border: 1.5px solid #dde5f8;
+  color: var(--text-dark); font-size: 11px; font-weight: 500;
+  font-family: inherit; border-radius: 8px; padding: 5px 10px;
+  cursor: pointer; outline: none;
+}
+#modal-folder-select:focus { border-color: var(--accent); }
+
+.modal-btn {
+  padding: 7px 16px; border-radius: 10px; border: none;
+  font-size: 11px; font-family: inherit; font-weight: 600;
+  cursor: pointer; flex-shrink: 0; transition: all .15s;
+}
+.modal-btn.ghost {
+  background: #f0f4ff; color: var(--text-dark);
+  border: 1.5px solid #dde5f8;
+}
+.modal-btn.ghost:hover { background: #e4eafc; }
+.modal-btn.ghost.copied { background: #d4f5e5; color: #1a7a4a; border-color: #b0e8cc; }
+.modal-btn.primary {
+  background: linear-gradient(135deg, var(--accent), #5b9ef6);
+  color: #fff; box-shadow: 0 4px 12px rgba(123,110,246,.3);
+}
+.modal-btn.primary:hover { box-shadow: 0 6px 18px rgba(123,110,246,.45); }
+.modal-btn.primary.copied { background: linear-gradient(135deg, var(--green), #3ecf8e); }
+
+/* Tags in modal */
+#modal-tags-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  border-top: 1px solid #edf1fb; padding-top: 8px;
+  min-height: 32px;
+}
+#modal-tags-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+#tag-input-wrap { display: flex; align-items: center; gap: 4px; min-width: 80px; }
+#tag-hash { font-size: 13px; color: var(--accent); font-weight: 600; }
+#tag-input {
+  background: transparent; border: none;
+  color: var(--text-dark); font-size: 12px; font-family: inherit; outline: none;
+}
+#tag-input::placeholder { color: var(--text-mid); }
+
+/* Shortcuts hint */
+#modal-shortcuts {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+#modal-shortcuts span {
+  font-size: 10px; color: rgba(255,255,255,.5);
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  padding: 3px 9px; border-radius: 5px;
+}
+
+#modal-close {
+  position: fixed; top: 20px; right: 24px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.8); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+#modal-close:hover { background: rgba(255,255,255,.25); color: #fff; }
+
+/* ──────────────── TOAST ──────────────── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--sidebar-bg); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; padding: 10px 20px;
+  font-size: 12px; font-weight: 500; color: var(--text-white);
+  opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none; z-index: 400; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* File input */
+#file-input { display: none; }
 </style>
 </head>
 <body>
 
-<header>
-  <div id="status-dot"></div>
-  <h1>Screenshot Archive</h1>
-  <span id="status-label">GitHub 미연결</span>
-  <button class="btn" onclick="pushAll()">GitHub 동기화</button>
-</header>
+<!-- Sidebar -->
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <div class="brand">
+      <div class="brand-icon">📷</div>
+      <div>
+        <div class="brand-name">Screenshot</div>
+        <div class="brand-sub">Archive</div>
+      </div>
+    </div>
+    <div id="git-status">
+      <div id="git-dot"></div>
+      <span id="git-label">확인 중...</span>
+    </div>
+  </div>
 
-<div class="toolbar">
-  <input id="search" type="text" placeholder="파일명 검색..." oninput="filterImages()">
-  <label class="btn" for="file-input">이미지 업로드</label>
-  <input id="file-input" type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
-  <span id="count"></span>
-</div>
+  <div class="section-label">라이브러리</div>
+  <div id="folder-list"></div>
+  <button id="add-folder-btn" onclick="promptNewFolder()">+ 폴더 추가</button>
 
-<div id="drop-zone" onclick="document.getElementById('file-input').click()">
-  여기에 이미지를 드래그하거나 클릭해서 업로드
-</div>
+  <div class="section-label" style="margin-top:10px">태그</div>
+  <div id="tag-section">
+    <div id="tag-list"></div>
+  </div>
 
-<div id="grid"></div>
-<div id="empty" style="display:none">저장된 스크린샷이 없어요.</div>
+  <div id="sidebar-bottom">
+    <label class="sidebar-btn ghost" for="file-input">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      이미지 업로드
+    </label>
+    <input id="file-input" type="file" accept="image/*" multiple onchange="uploadFiles(this.files)">
+    <button class="sidebar-btn primary" onclick="pushAll()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+      GitHub 동기화
+    </button>
+  </div>
+</aside>
 
+<!-- Main -->
+<main id="main">
+  <div id="topbar">
+    <div id="current-title">전체 <span id="count-chip"></span></div>
+    <button class="glass-btn" onclick="document.getElementById('file-input').click()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      새 이미지
+    </button>
+  </div>
+
+  <div id="toolbar">
+    <div id="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="이미지 검색..." oninput="filterImages()">
+    </div>
+    <div id="zoom-wrap">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <input id="zoom-slider" type="range" min="120" max="320" value="200" oninput="setZoom(this.value)">
+    </div>
+  </div>
+
+  <div id="grid-area">
+    <div id="grid"></div>
+    <div id="empty">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span>저장된 이미지가 없어요</span>
+    </div>
+  </div>
+</main>
+
+<div id="drop-overlay">📂 이미지를 여기에 놓으세요</div>
+
+<!-- Modal -->
 <div id="modal">
-  <span id="modal-close" onclick="closeModal()">✕</span>
-  <img id="modal-img" src="" alt="">
-  <div id="modal-url">
-    <span id="modal-url-text"></span>
-    <button class="btn primary" id="modal-copy-btn" onclick="copyModalUrl()">URL 복사</button>
+  <button id="modal-close" onclick="closeModal()">✕</button>
+  <div id="modal-content">
+    <img id="modal-img" src="" alt="">
+    <div id="modal-panel">
+      <div class="modal-row">
+        <input id="modal-name-input" type="text" placeholder="이름 입력..." onblur="saveModalMeta()" onkeydown="handleNameKey(event)">
+        <select id="modal-folder-select" onchange="saveModalMeta()"></select>
+        <button class="modal-btn ghost" id="modal-img-copy-btn" onclick="copyModalImage()">이미지 복사</button>
+        <button class="modal-btn primary" id="modal-copy-btn" onclick="copyModalUrl()">URL 복사</button>
+      </div>
+      <div id="modal-tags-row">
+        <div id="modal-tags-chips"></div>
+        <div id="tag-input-wrap">
+          <span id="tag-hash">#</span>
+          <input id="tag-input" type="text" placeholder="태그 추가..." onkeyup="handleTagInput(event)">
+        </div>
+      </div>
+    </div>
+    <div id="modal-shortcuts">
+      <span>← → 이동</span><span>E 이름 편집</span><span>⌘C URL 복사</span><span>Del 삭제</span><span>Esc 닫기</span>
+    </div>
   </div>
 </div>
 
@@ -173,150 +589,361 @@
 
 <script>
 let allImages = [];
+let allFolders = [];
+let currentFolder = 'all';
+let currentTag = null;
 let currentModal = null;
+const imageMap = new Map();
 
+// ── Folders ──
+async function loadFolders() {
+  const res = await fetch('/api/folders');
+  const data = await res.json();
+  allFolders = [...data.dateFolders.map(f => f.name), ...data.otherFolders.map(f => f.name)];
+
+  const rows = [
+    { key: 'all', label: '전체', icon: '🗂', count: data.total },
+    ...data.dateFolders.map(f => ({ key: f.name, label: f.name, icon: '📅', count: f.count })),
+    ...data.otherFolders.map(f => ({ key: f.name, label: f.name, icon: '📁', count: f.count, deletable: !f.isDate })),
+  ];
+  document.getElementById('folder-list').innerHTML = rows.map(r => `
+    <div class="nav-item ${r.key === currentFolder && !currentTag ? 'active' : ''}" data-key="${esc(r.key)}" onclick="selectFolder('${esc(r.key)}')">
+      <span class="nav-icon">${r.icon}</span>
+      <span class="nav-label">${esc(r.label)}</span>
+      <span class="nav-count">${r.count}</span>
+      ${r.deletable ? `<button class="del-btn" onclick="deleteFolder(event,'${esc(r.key)}')" title="삭제">×</button>` : ''}
+    </div>
+  `).join('');
+  updateFolderSelect();
+  loadTags();
+}
+
+function selectFolder(key) {
+  currentFolder = key; currentTag = null;
+  document.getElementById('current-title').innerHTML = `${key === 'all' ? '전체' : key} <span id="count-chip"></span>`;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.key === key));
+  document.querySelectorAll('.tag-nav-item').forEach(el => el.classList.remove('active'));
+  loadImages();
+}
+
+async function promptNewFolder() {
+  const name = prompt('새 폴더 이름:');
+  if (!name || !name.trim()) return;
+  await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim() }) });
+  await loadFolders(); toast(`"${name.trim()}" 폴더 생성`);
+}
+async function deleteFolder(e, name) {
+  e.stopPropagation();
+  if (!confirm(`"${name}" 폴더 삭제?\n(이미지는 '기타'로 이동)`)) return;
+  await fetch(`/api/folders/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  if (currentFolder === name) selectFolder('all');
+  await loadFolders(); loadImages();
+}
+function updateFolderSelect() {
+  document.getElementById('modal-folder-select').innerHTML = allFolders.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+}
+
+// ── Tags ──
+async function loadTags() {
+  const res = await fetch('/api/tags');
+  const tags = await res.json();
+  const list = document.getElementById('tag-list');
+  if (!tags.length) {
+    list.innerHTML = '<div style="padding:4px 20px;font-size:10px;color:rgba(255,255,255,.3)">태그 없음</div>';
+    return;
+  }
+  list.innerHTML = tags.map(t => `
+    <div class="tag-nav-item ${currentTag === t.name ? 'active' : ''}" data-tag="${esc(t.name)}" onclick="selectTag('${esc(t.name)}')">
+      <span class="tag-pill"></span>
+      <span class="nav-label">${esc(t.name)}</span>
+      <span class="nav-count">${t.count}</span>
+    </div>
+  `).join('');
+}
+function selectTag(tag) {
+  if (currentTag === tag) { currentTag = null; selectFolder(currentFolder); return; }
+  currentTag = tag; currentFolder = 'all';
+  document.getElementById('current-title').innerHTML = `#${tag} <span id="count-chip"></span>`;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tag-nav-item').forEach(el => el.classList.toggle('active', el.dataset.tag === tag));
+  loadImages();
+}
+function clickTag(e, tag) { e.stopPropagation(); closeModal(); selectTag(tag); }
+
+function renderModalTags() {
+  if (!currentModal) return;
+  document.getElementById('modal-tags-chips').innerHTML = (currentModal.tags || []).map(t =>
+    `<span class="tag-chip">${esc(t)}<span class="rm" onclick="removeTag('${esc(t)}')">×</span></span>`
+  ).join('');
+}
+async function addTag(tag) {
+  if (!currentModal || !tag.trim()) return;
+  const clean = tag.trim().replace(/^#+/, '').toLowerCase();
+  if (!clean) return;
+  const tags = [...new Set([...(currentModal.tags || []), clean])];
+  await saveTags(tags);
+}
+async function removeTag(tag) {
+  if (!currentModal) return;
+  await saveTags((currentModal.tags || []).filter(t => t !== tag));
+}
+async function saveTags(tags) {
+  await fetch(`/api/images/${encodeURIComponent(currentModal.name)}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tags }),
+  });
+  currentModal.tags = tags;
+  renderModalTags(); loadTags(); loadImages();
+}
+function handleTagInput(e) {
+  if (e.isComposing) return;
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.replace(/,/g, '').trim();
+    if (val) addTag(val);
+    e.target.value = '';
+  }
+}
+
+// ── Images ──
 async function loadImages() {
-  const res = await fetch('/api/images');
+  const params = new URLSearchParams();
+  if (currentFolder !== 'all') params.set('folder', currentFolder);
+  if (currentTag) params.set('tag', currentTag);
+  const res = await fetch('/api/images' + (params.toString() ? '?' + params : ''));
   allImages = await res.json();
-  renderGrid(allImages);
-  document.getElementById('count').textContent = `${allImages.length}장`;
+  renderGrid(filterList(allImages));
 }
-
-function filterImages() {
+function filterList(imgs) {
   const q = document.getElementById('search').value.toLowerCase();
-  const filtered = q ? allImages.filter(i => i.name.toLowerCase().includes(q)) : allImages;
-  renderGrid(filtered);
+  return q ? imgs.filter(i => i.displayName.toLowerCase().includes(q) || i.name.toLowerCase().includes(q)) : imgs;
 }
+function filterImages() { renderGrid(filterList(allImages)); }
 
 function renderGrid(images) {
   const grid = document.getElementById('grid');
   const empty = document.getElementById('empty');
-  if (!images.length) {
-    grid.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  const chip = document.getElementById('count-chip');
+  if (chip) chip.textContent = images.length ? `${images.length}장` : '';
+  if (!images.length) { grid.innerHTML = ''; empty.style.display = 'flex'; return; }
   empty.style.display = 'none';
+  imageMap.clear();
+  images.forEach(img => imageMap.set(img.name, img));
   grid.innerHTML = images.map(img => `
-    <div class="card" data-name="${img.name}">
-      <img src="${img.localUrl}" alt="${img.name}" loading="lazy" onclick="openModal('${img.name}', '${img.rawUrl}', '${img.localUrl}')">
-      <span class="badge">${formatSize(img.size)}</span>
+    <div class="card" data-name="${esc(img.name)}">
+      <img class="card-thumb" src="${img.localUrl}" alt="${esc(img.displayName)}" loading="lazy">
+      <div class="card-actions">
+        <button class="icon-btn" data-action="copy-img" title="이미지 복사">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
+        <button class="icon-btn" data-action="copy-url" title="URL 복사">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+        <button class="icon-btn danger" data-action="delete" title="삭제">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
       <div class="card-body">
-        <div class="card-name">${img.name}</div>
-        <div class="card-meta">${new Date(img.mtime).toLocaleString('ko-KR')}</div>
-        <div class="card-actions">
-          <button class="action-btn" onclick="copyUrl(this, '${img.rawUrl}')">URL 복사</button>
-          <button class="action-btn" onclick="copyUrl(this, '${img.localUrl}', true)">로컬 복사</button>
-          <button class="action-btn danger" onclick="deleteImage(event, '${img.name}')">삭제</button>
+        <div class="card-name">${esc(img.displayName)}</div>
+        <div class="card-meta">
+          <span>${img.folder}</span>
+          <span>${formatSize(img.size)}</span>
         </div>
+        ${img.tags && img.tags.length ? `<div class="card-tags">${img.tags.map(t => `<span class="tag-chip" data-tag="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
       </div>
     </div>
   `).join('');
 }
 
-async function copyUrl(btn, url, local = false) {
-  await navigator.clipboard.writeText(local ? location.origin + url : url);
-  btn.classList.add('copied');
-  btn.textContent = '복사됨!';
-  setTimeout(() => { btn.classList.remove('copied'); btn.textContent = local ? '로컬 복사' : 'URL 복사'; }, 1500);
-  toast(local ? '로컬 URL 복사됨' : 'GitHub URL 복사됨');
-}
+document.getElementById('grid').addEventListener('click', async e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const img = imageMap.get(card.dataset.name);
+  if (!img) return;
+  const tagChip = e.target.closest('[data-tag]');
+  if (tagChip) { clickTag(e, tagChip.dataset.tag); return; }
+  const btn = e.target.closest('[data-action]');
+  if (btn) {
+    e.stopPropagation();
+    if (btn.dataset.action === 'copy-img') { await copyCardImage(btn, img.localUrl); return; }
+    if (btn.dataset.action === 'copy-url') { await copyCardUrl(btn, img.rawUrl); return; }
+    if (btn.dataset.action === 'delete') { await deleteImage(img.name); return; }
+  }
+  openModal(img);
+});
 
-async function deleteImage(e, name) {
-  e.stopPropagation();
-  if (!confirm(`"${name}" 를 삭제할까요?`)) return;
-  await fetch(`/api/images/${encodeURIComponent(name)}`, { method: 'DELETE' });
-  allImages = allImages.filter(i => i.name !== name);
-  filterImages();
-  document.getElementById('count').textContent = `${allImages.length}장`;
-  toast('삭제됨');
-}
-
-function openModal(name, rawUrl, localUrl) {
-  currentModal = { name, rawUrl, localUrl };
-  document.getElementById('modal-img').src = localUrl;
-  document.getElementById('modal-url-text').textContent = rawUrl;
-  document.getElementById('modal').classList.add('open');
+// ── Modal ──
+function openModal(img) {
+  currentModal = img;
+  document.getElementById('modal-img').src = img.localUrl;
+  document.getElementById('modal-name-input').value = img.displayName;
+  updateFolderSelect();
+  document.getElementById('modal-folder-select').value = img.folder;
   document.getElementById('modal-copy-btn').textContent = 'URL 복사';
+  document.getElementById('modal-copy-btn').classList.remove('copied');
+  document.getElementById('modal-img-copy-btn').textContent = '이미지 복사';
+  document.getElementById('modal-img-copy-btn').classList.remove('copied');
+  document.getElementById('tag-input').value = '';
+  renderModalTags();
+  document.getElementById('modal').classList.add('open');
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
   currentModal = null;
 }
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+document.addEventListener('keydown', e => {
+  const inInput = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+  if (e.key === 'Escape') {
+    if (document.activeElement === document.getElementById('modal-name-input')) document.activeElement.blur();
+    else closeModal();
+    return;
+  }
+  if (!currentModal) return;
+  if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !inInput) { e.preventDefault(); copyModalUrl(); return; }
+  if (inInput) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); navigateModal(e.key === 'ArrowRight' ? 1 : -1); return; }
+  if (e.key === 'F2' || e.key === 'e') { e.preventDefault(); const inp = document.getElementById('modal-name-input'); inp.focus(); inp.select(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); const n = currentModal.name; closeModal(); deleteImage(n); }
+});
+
+function handleNameKey(e) { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }
+function navigateModal(dir) {
+  const filtered = filterList(allImages);
+  const idx = filtered.findIndex(i => i.name === currentModal.name);
+  const next = filtered[idx + dir];
+  if (next) openModal(next);
+}
+async function saveModalMeta() {
+  if (!currentModal) return;
+  const displayName = document.getElementById('modal-name-input').value.trim();
+  const folder = document.getElementById('modal-folder-select').value;
+  if (displayName === currentModal.displayName && folder === currentModal.folder) return;
+  await fetch(`/api/images/${encodeURIComponent(currentModal.name)}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName, folder }),
+  });
+  currentModal.displayName = displayName; currentModal.folder = folder;
+  await loadFolders(); await loadImages(); toast('저장됨');
+}
+
+// ── Copy / Delete ──
+async function copyModalImage() {
+  if (!currentModal) return;
+  const btn = document.getElementById('modal-img-copy-btn');
+  try {
+    const blob = await fetch(currentModal.localUrl).then(r => r.blob());
+    const png = blob.type === 'image/png' ? blob : await convertToPng(blob);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    btn.textContent = '복사됨!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '이미지 복사'; btn.classList.remove('copied'); }, 1500);
+    toast('이미지 복사됨');
+  } catch { toast('이미지 복사 실패'); }
+}
 async function copyModalUrl() {
   if (!currentModal) return;
   await navigator.clipboard.writeText(currentModal.rawUrl);
   const btn = document.getElementById('modal-copy-btn');
-  btn.textContent = '복사됨!';
-  setTimeout(() => btn.textContent = 'URL 복사', 1500);
-  toast('GitHub URL 복사됨');
+  btn.textContent = '복사됨!'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'URL 복사'; btn.classList.remove('copied'); }, 1500);
+  toast('URL 복사됨');
+}
+async function copyCardImage(btn, localUrl) {
+  try {
+    const blob = await fetch(localUrl).then(r => r.blob());
+    const png = blob.type === 'image/png' ? blob : await convertToPng(blob);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 1500);
+    toast('이미지 복사됨');
+  } catch { toast('이미지 복사 실패'); }
+}
+async function copyCardUrl(btn, url) {
+  await navigator.clipboard.writeText(url);
+  btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 1500);
+  toast('URL 복사됨');
+}
+async function deleteImage(name) {
+  if (!confirm('삭제할까요?')) return;
+  await fetch(`/api/images/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  await loadFolders(); await loadImages(); toast('삭제됨');
+}
+async function convertToPng(blob) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(resolve, 'image/png');
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(blob);
+  });
 }
 
+// ── Upload ──
 async function uploadFiles(files) {
+  if (!files.length) return;
   const fd = new FormData();
   for (const f of files) fd.append('images', f);
   toast('업로드 중...');
   const res = await fetch('/api/upload', { method: 'POST', body: fd });
   const data = await res.json();
+  await loadFolders(); await loadImages();
   toast(`${data.added.length}장 업로드 완료`);
-  loadImages();
 }
-
 async function pushAll() {
-  toast('GitHub에 동기화 중...');
+  toast('동기화 중...');
   const res = await fetch('/api/push-all', { method: 'POST' });
   const data = await res.json();
-  toast(data.ok ? 'GitHub 동기화 완료' : `동기화 실패: ${data.message}`);
+  toast(data.ok ? 'GitHub 동기화 완료' : `실패: ${data.message}`);
 }
 
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+// ── Zoom ──
+function setZoom(v) {
+  document.getElementById('grid').style.gridTemplateColumns = `repeat(auto-fill, minmax(${v}px, 1fr))`;
 }
+setZoom(200);
 
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + 'B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB';
-  return (bytes / 1024 / 1024).toFixed(1) + 'MB';
-}
-
-// Drag & drop
-const dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag-over');
-  uploadFiles(e.dataTransfer.files);
-});
-
-// SSE for live updates
-const es = new EventSource('/api/events');
-es.addEventListener('added', () => loadImages());
-es.addEventListener('removed', () => loadImages());
-
-// GitHub status
+// ── Git status ──
 async function checkGitStatus() {
   const res = await fetch('/api/git-status');
-  const data = await res.json();
-  const dot = document.getElementById('status-dot');
-  const label = document.getElementById('status-label');
-  if (data.connected) {
-    dot.className = 'ok';
-    label.textContent = `GitHub 연결됨`;
-  } else {
-    dot.className = 'err';
-    label.textContent = 'GitHub 미연결';
-  }
+  const { connected } = await res.json();
+  document.getElementById('git-dot').className = connected ? 'ok' : 'err';
+  document.getElementById('git-label').textContent = connected ? 'GitHub 연결됨' : 'GitHub 미연결';
 }
 
-loadImages();
+// ── Drag & drop ──
+let dragDepth = 0;
+document.addEventListener('dragenter', e => { if ([...e.dataTransfer.types].includes('Files')) { dragDepth++; document.getElementById('drop-overlay').classList.add('active'); } });
+document.addEventListener('dragleave', () => { dragDepth--; if (dragDepth <= 0) { dragDepth = 0; document.getElementById('drop-overlay').classList.remove('active'); } });
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0;
+  document.getElementById('drop-overlay').classList.remove('active');
+  if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+});
+
+// ── SSE ──
+const es = new EventSource('/api/events');
+['added','removed','updated'].forEach(ev => es.addEventListener(ev, async () => { await loadFolders(); await loadImages(); }));
+
+// ── Helpers ──
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+function formatSize(b) {
+  if (b < 1024) return b + 'B';
+  if (b < 1048576) return (b/1024).toFixed(0) + 'KB';
+  return (b/1048576).toFixed(1) + 'MB';
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Init ──
 checkGitStatus();
+loadFolders();
+loadImages();
 </script>
 </body>
 </html>
